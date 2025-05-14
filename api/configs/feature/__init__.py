@@ -12,7 +12,7 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings
 
-from configs.feature.hosted_service import HostedServiceConfig
+from .hosted_service import HostedServiceConfig
 
 
 class SecurityConfig(BaseSettings):
@@ -74,7 +74,7 @@ class CodeExecutionSandboxConfig(BaseSettings):
 
     CODE_EXECUTION_ENDPOINT: HttpUrl = Field(
         description="URL endpoint for the code execution service",
-        default="http://sandbox:8194",
+        default=HttpUrl("http://sandbox:8194"),
     )
 
     CODE_EXECUTION_API_KEY: str = Field(
@@ -145,7 +145,7 @@ class PluginConfig(BaseSettings):
 
     PLUGIN_DAEMON_URL: HttpUrl = Field(
         description="Plugin API URL",
-        default="http://localhost:5002",
+        default=HttpUrl("http://localhost:5002"),
     )
 
     PLUGIN_DAEMON_KEY: str = Field(
@@ -188,7 +188,7 @@ class MarketplaceConfig(BaseSettings):
 
     MARKETPLACE_API_URL: HttpUrl = Field(
         description="Marketplace API URL",
-        default="https://marketplace.dify.ai",
+        default=HttpUrl("https://marketplace.dify.ai"),
     )
 
 
@@ -398,6 +398,11 @@ class InnerAPIConfig(BaseSettings):
         default=False,
     )
 
+    INNER_API_KEY: Optional[str] = Field(
+        description="API key for accessing the internal API",
+        default=None,
+    )
+
 
 class LoggingConfig(BaseSettings):
     """
@@ -517,6 +522,11 @@ class WorkflowNodeExecutionConfig(BaseSettings):
     MAX_SUBMIT_COUNT: PositiveInt = Field(
         description="Maximum number of submitted thread count in a ThreadPool for parallel node execution",
         default=100,
+    )
+
+    WORKFLOW_NODE_EXECUTION_STORAGE: str = Field(
+        default="rdbms",
+        description="Storage backend for WorkflowNodeExecution. Options: 'rdbms', 'hybrid'",
     )
 
 

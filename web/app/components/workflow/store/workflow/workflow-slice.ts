@@ -10,11 +10,8 @@ type PreviewRunningData = WorkflowRunningData & {
 }
 
 export type WorkflowSliceShape = {
-  appId: string
   workflowRunningData?: PreviewRunningData
   setWorkflowRunningData: (workflowData: PreviewRunningData) => void
-  notInitialWorkflow: boolean
-  setNotInitialWorkflow: (notInitialWorkflow: boolean) => void
   clipboardElements: Node[]
   setClipboardElements: (clipboardElements: Node[]) => void
   selection: null | { x1: number; y1: number; x2: number; y2: number }
@@ -33,16 +30,20 @@ export type WorkflowSliceShape = {
   setShowImportDSLModal: (showImportDSLModal: boolean) => void
   showTips: string
   setShowTips: (showTips: string) => void
+  workflowConfig?: Record<string, any>
+  setWorkflowConfig: (workflowConfig: Record<string, any>) => void
 }
 
 export const createWorkflowSlice: StateCreator<WorkflowSliceShape> = set => ({
-  appId: '',
   workflowRunningData: undefined,
   setWorkflowRunningData: workflowRunningData => set(() => ({ workflowRunningData })),
-  notInitialWorkflow: false,
-  setNotInitialWorkflow: notInitialWorkflow => set(() => ({ notInitialWorkflow })),
-  clipboardElements: [],
-  setClipboardElements: clipboardElements => set(() => ({ clipboardElements })),
+  clipboardElements: (() => {
+    const storedElements = localStorage.getItem('clipboard_elements')
+    return storedElements ? JSON.parse(storedElements) : []
+  })(),
+  setClipboardElements: (clipboardElements) => {
+    localStorage.setItem('clipboard_elements', JSON.stringify(clipboardElements))
+  },
   selection: null,
   setSelection: selection => set(() => ({ selection })),
   bundleNodeSize: null,
@@ -62,4 +63,6 @@ export const createWorkflowSlice: StateCreator<WorkflowSliceShape> = set => ({
   setShowImportDSLModal: showImportDSLModal => set(() => ({ showImportDSLModal })),
   showTips: '',
   setShowTips: showTips => set(() => ({ showTips })),
+  workflowConfig: undefined,
+  setWorkflowConfig: workflowConfig => set(() => ({ workflowConfig })),
 })

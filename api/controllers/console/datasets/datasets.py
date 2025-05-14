@@ -1,7 +1,7 @@
-import flask_restful  # type: ignore
+import flask_restful
 from flask import request
-from flask_login import current_user  # type: ignore  # type: ignore
-from flask_restful import Resource, marshal, marshal_with, reqparse  # type: ignore
+from flask_login import current_user
+from flask_restful import Resource, marshal, marshal_with, reqparse
 from werkzeug.exceptions import Forbidden, NotFound
 
 import services
@@ -526,14 +526,20 @@ class DatasetIndexingStatusApi(Resource):
         )
         documents_status = []
         for document in documents:
-            completed_segments = DocumentSegment.query.filter(
-                DocumentSegment.completed_at.isnot(None),
-                DocumentSegment.document_id == str(document.id),
-                DocumentSegment.status != "re_segment",
-            ).count()
-            total_segments = DocumentSegment.query.filter(
-                DocumentSegment.document_id == str(document.id), DocumentSegment.status != "re_segment"
-            ).count()
+            completed_segments = (
+                db.session.query(DocumentSegment)
+                .filter(
+                    DocumentSegment.completed_at.isnot(None),
+                    DocumentSegment.document_id == str(document.id),
+                    DocumentSegment.status != "re_segment",
+                )
+                .count()
+            )
+            total_segments = (
+                db.session.query(DocumentSegment)
+                .filter(DocumentSegment.document_id == str(document.id), DocumentSegment.status != "re_segment")
+                .count()
+            )
             document.completed_segments = completed_segments
             document.total_segments = total_segments
             documents_status.append(marshal(document, document_status_fields))
@@ -657,6 +663,7 @@ class DatasetRetrievalSettingApi(Resource):
                 | VectorType.ELASTICSEARCH
                 | VectorType.ELASTICSEARCH_JA
                 | VectorType.PGVECTOR
+                | VectorType.VASTBASE
                 | VectorType.TIDB_ON_QDRANT
                 | VectorType.LINDORM
                 | VectorType.COUCHBASE
@@ -664,6 +671,7 @@ class DatasetRetrievalSettingApi(Resource):
                 | VectorType.OPENGAUSS
                 | VectorType.OCEANBASE
                 | VectorType.TABLESTORE
+                | VectorType.HUAWEI_CLOUD
                 | VectorType.TENCENT
             ):
                 return {
@@ -705,11 +713,13 @@ class DatasetRetrievalSettingMockApi(Resource):
                 | VectorType.ELASTICSEARCH_JA
                 | VectorType.COUCHBASE
                 | VectorType.PGVECTOR
+                | VectorType.VASTBASE
                 | VectorType.LINDORM
                 | VectorType.OPENGAUSS
                 | VectorType.OCEANBASE
                 | VectorType.TABLESTORE
                 | VectorType.TENCENT
+                | VectorType.HUAWEI_CLOUD
             ):
                 return {
                     "retrieval_method": [

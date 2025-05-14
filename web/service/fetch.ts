@@ -2,7 +2,7 @@ import type { AfterResponseHook, BeforeErrorHook, BeforeRequestHook, Hooks } fro
 import ky from 'ky'
 import type { IOtherOptions } from './base'
 import Toast from '@/app/components/base/toast'
-import { API_PREFIX, MARKETPLACE_API_PREFIX, PUBLIC_API_PREFIX } from '@/config'
+import { API_PREFIX, MARKETPLACE_API_PREFIX, PUBLIC_API_PREFIX, WEB_PREFIX } from '@/config'
 import { getInitialTokenV2, isTokenV1 } from '@/app/components/share/utils'
 import { getProcessedSystemVariablesFromUrlParams } from '@/app/components/base/chat/utils'
 
@@ -44,7 +44,7 @@ const afterResponseErrorCode = (otherOptions: IOtherOptions): AfterResponseHook 
             if (!otherOptions.silent)
               Toast.notify({ type: 'error', message: data.message })
             if (data.code === 'already_setup')
-              globalThis.location.href = `${globalThis.location.origin}/signin`
+              globalThis.location.href = `${WEB_PREFIX}/signin`
           })
           break
         case 401:
@@ -132,12 +132,13 @@ async function base<T>(url: string, options: FetchOptionType = {}, otherOptions:
     getAbortController,
   } = otherOptions
 
-  const base
-    = isMarketplaceAPI
-      ? MARKETPLACE_API_PREFIX
-      : isPublicAPI
-        ? PUBLIC_API_PREFIX
-        : API_PREFIX
+  let base: string
+  if (isMarketplaceAPI)
+    base = MARKETPLACE_API_PREFIX
+   else if (isPublicAPI)
+    base = PUBLIC_API_PREFIX
+   else
+    base = API_PREFIX
 
   if (getAbortController) {
     const abortController = new AbortController()
@@ -145,7 +146,7 @@ async function base<T>(url: string, options: FetchOptionType = {}, otherOptions:
     options.signal = abortController.signal
   }
 
-  const fetchPathname = `${base}${url.startsWith('/') ? url : `/${url}`}`
+  const fetchPathname = base + (url.startsWith('/') ? url : `/${url}`)
 
   if (deleteContentType)
     (headers as any).delete('Content-Type')
@@ -180,6 +181,16 @@ async function base<T>(url: string, options: FetchOptionType = {}, otherOptions:
     },
     ...(bodyStringify ? { json: body } : { body: body as BodyInit }),
     searchParams: params,
+    fetch(resource: RequestInfo | URL, options?: RequestInit) {
+      if (resource instanceof Request && options) {
+        const mergedHeaders = new Headers(options.headers || {})
+        resource.headers.forEach((value, key) => {
+          mergedHeaders.append(key, value)
+        })
+        options.headers = mergedHeaders
+      }
+      return globalThis.fetch(resource, options)
+    },
   })
 
   if (needAllResponseContent)
